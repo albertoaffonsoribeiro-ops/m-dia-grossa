@@ -1,0 +1,43 @@
+name: 📰 Gerar Newsletter Diária
+
+on:
+  schedule:
+    # Roda todo dia às 7h no horário de Brasília (10h UTC)
+    - cron: "0 10 * * *"
+
+  # Permite rodar manualmente pelo painel do GitHub
+  workflow_dispatch:
+
+jobs:
+  gerar:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Baixa o código do repositório
+      - name: 📥 Checkout do repositório
+        uses: actions/checkout@v4
+
+      # 2. Instala o Python
+      - name: 🐍 Configurar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      # 3. Instala as dependências
+      - name: 📦 Instalar dependências
+        run: pip install anthropic feedparser
+
+      # 4. Roda o script que gera a newsletter
+      - name: ✍️ Gerar newsletter
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: python gerar_newsletter.py
+
+      # 5. Sobe o index.html gerado de volta pro GitHub
+      - name: 🚀 Publicar no GitHub
+        run: |
+          git config user.name "newsletter-bot"
+          git config user.email "bot@midiagrossa.com"
+          git add index.html edicoes/
+          git diff --staged --quiet || git commit -m "📰 Newsletter $(date +'%Y-%m-%d')"
+          git push
